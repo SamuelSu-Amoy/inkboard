@@ -1,69 +1,108 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  InkBoard 固件云编译
+#
+#  用法：Actions → Build InkBoard Firmware → Run workflow
+#        1) 选屏幕（env）
+#        2) 选固件类型（normal / test）
+#        3) 等 5~10 分钟 → 页面底部下载 Artifacts
+#
+#  说明：
+#   · normal = 正式版，按设定的间隔唤醒刷新（几十分钟一次）
+#   · test   = 调试版，每分钟唤醒一次，方便观察效果
+#   · 只有 base env 带 _test 变体时 test 才生效，否则自动回退 normal
+#   · 已剔除 _led5（老板 LED 接 GPIO5）和 _selftest（不联网自检图）变体
+# ═══════════════════════════════════════════════════════════════════════════
+
 name: Build InkBoard Firmware
 
 on:
   workflow_dispatch:
     inputs:
       env:
-        description: 'PlatformIO 环境名（见下方选项）'
+        description: '屏幕型号（见下方注释）'
         required: true
         default: 'epd_42_hink_ssd1683_c3_promini'
         type: choice
         options:
-          # ---------- 3.98" 华为四色屏 SE0398NZ07（768×552 黑白黄红）----------
-          - epd_398_se0398nz07a0_c3_promini
-          - epd_398_se0398nz07a0_c3_promini_led5
-          - epd_398_se0398nz07a0_c3_promini_selftest
-          - epd_398_se0398nz07a1_c3_promini
-          - epd_398_se0398nz07a1_c3_promini_led5
-          - epd_398_se0398nz07a1_c3_promini_selftest
-          - epd_398_se0398nz07a0_wroom32e
-          - epd_398_se0398nz07a0_yd_s3_n16r8
-          - epd_398_se0398nz07a1_yd_s3_n16r8
-          # ---------- 4.2" 400x300 ----------
-          - epd_42_hink_ssd1683_c3_promini
-          - epd_42_hink_ssd1683_c3_promini_led5
-          - epd_42_hink_ssd1683_c3_promini_test
-          - epd_42_hink_ssd1683_c3_promini_selftest
-          - epd_42_hink_ssd1683_wroom32e
-          - epd_42_hink_ssd1683_yd_s3_n16r8
-          - epd_42_uc8176_bwr_c3_promini
-          - epd_42_uc8176_bwr_wroom32e
-          - epd_42_gdem042f52_jd79668_c3_promini
-          - epd_42_depg0420ry683_ssd1683_c3_promini
-          - epd_42_wft0cz15_bwr_c3_promini
-          - epd_42_wsv2_ssd1683_c3_promini
-          - epd_42_wsv2_ssd1683_c3_std
-          - epd_42_wsv2_ssd1683_wroom32e
-          - epd_42_wsv2_ssd1683_yd_s3_n16r8
-          - epd_42_gxepd2_c3_promini
-          - epd_42_zhongjingyuan_bw_c3_promini
-          - epd_42_wft0cz15_bw_c3_promini
-          - epd_42_ssd1680_bwr_c3_promini
-          - epd_42_ssd1680_bw_c3_promini
-          - epd_42_se0420nq04_c3_promini
-          # ---------- 其它尺寸（备用）----------
-          - epd_583_uc8179_bwr_c3_promini
-          - epd_75_uc8179_c3_promini
-          - epd_565_uc8159_c3_promini
-          - epd_73_acep_c3_promini
-          - epd_73_spectra6_c3_promini
+          # ─────────────────────────────────────────────────────────────
+          # 华为 3.98" 四色屏  SE0398NZ07  768×552  黑白黄红
+          # 来源：华为 Nova 14 彩色显示手机壳拆屏
+          # 注意：不支持局刷，只能全刷；FPC 印 A1 就选 A1
+          # ─────────────────────────────────────────────────────────────
+          - epd_398_se0398nz07a0_c3_promini        # A0 版 · C3 · 最常见，先试这个
+          - epd_398_se0398nz07a1_c3_promini        # A1 版 · C3 · 排线印着 A1 时选
+
+          # ─────────────────────────────────────────────────────────────
+          # 4.2" 400×300 · 三色（黑白红 / 黑白黄红）
+          # ─────────────────────────────────────────────────────────────
+          - epd_42_hink_ssd1683_c3_promini         # HINK SSD1683 · 黑白红 · 作者自用款
+          - epd_42_uc8176_bwr_c3_promini           # UC8176 · 黑白红 · 微雪 4.2 B V1 / GDEW042Z15
+          - epd_42_wft0cz15_bwr_c3_promini         # WFT0420CZ15 · 黑白红
+          - epd_42_ssd1680_bwr_c3_promini          # SSD1680 · 黑白红 · DKE DEPG0420RWS830F0
+          - epd_42_gdem042f52_jd79668_c3_promini   # JD79668 · 黑白红黄 · GDEM042F52
+          - epd_42_depg0420ry683_ssd1683_c3_promini # SSD1683 · 黑白红黄 · DKE DEPG0420RY683
+
+          # ─────────────────────────────────────────────────────────────
+          # 4.2" 400×300 · 纯黑白
+          # ─────────────────────────────────────────────────────────────
+          - epd_42_wsv2_ssd1683_c3_promini         # 微雪 V2 · 黑白 · SSD1683
+          - epd_42_zhongjingyuan_bw_ssd1683_c3_promini # 中景园 · 黑白 · SSD1683
+          - epd_42_zhongjingyuan_bw_gxepd2_gye042a87_c3_promini # 中景园 GYE042A87 · GxEPD2
+          - epd_42_gxepd2_gdey042t81_ssd1683_c3_promini # GDEY042T81 · 黑白（GDEW042T2 替代款）
+          - epd_42_gxepd2_gdew042t2_il0398_c3_promini   # GDEW042T2 · 黑白 · IL0398
+          - epd_42_gxepd2_gdew042m01_uc8176_c3_promini  # GDEW042M01 · UC8176
+          - epd_42_wft0cz15_bw_c3_promini          # WFT0420CZ15 · 黑白
+          - epd_42_ssd1680_bw_c3_promini           # SSD1680 · 黑白
+          - epd_42_se0420nq04_c3_promini           # SE0420NQ04 · 黑白
+
+          # ─────────────────────────────────────────────────────────────
+          # 其它主控板（换了 WROOM-32E / S3 才需要）
+          # ─────────────────────────────────────────────────────────────
+          - epd_42_hink_ssd1683_wroom32e           # HINK SSD1683 · WROOM-32E
+          - epd_42_hink_ssd1683_yd_s3_n16r8        # HINK SSD1683 · ESP32-S3 N16R8
+          - epd_398_se0398nz07a0_wroom32e          # 华为 3.98 A0 · WROOM-32E
+          - epd_398_se0398nz07a0_yd_s3_n16r8       # 华为 3.98 A0 · S3 N16R8
+          - epd_398_se0398nz07a1_yd_s3_n16r8       # 华为 3.98 A1 · S3 N16R8
+
+      mode:
+        description: '固件类型'
+        required: true
+        default: 'normal'
+        type: choice
+        options:
+          - normal    # 正式版：按设定间隔唤醒（省电）
+          - test      # 调试版：每分钟唤醒一次（看效果用）
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: 安装 Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install PlatformIO
+      - name: 安装 PlatformIO
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade platformio
 
-      - name: Cache PlatformIO
+      - name: 锁定 espressif32 版本
+        # 修复新版框架 setCACertBundle() 由 1 参数变 2 参数导致的编译失败
+        # 已经手动改过的话，这条 sed 不会匹配，无副作用
+        run: |
+          if grep -qE '^platform = espressif32$' firmware/platformio.ini; then
+            sed -i 's/^platform = espressif32$/platform = espressif32@6.9.0/' firmware/platformio.ini
+            echo "已锁定为 espressif32@6.9.0"
+          else
+            echo "已锁定或使用自定义平台，跳过"
+          fi
+          grep -n 'platform = ' firmware/platformio.ini | head -3
+
+      - name: 缓存 PlatformIO
         uses: actions/cache@v4
         with:
           path: |
@@ -73,24 +112,70 @@ jobs:
           restore-keys: |
             pio-${{ runner.os }}-
 
-      - name: Build
+      - name: 选择实际编译环境
+        run: |
+          BASE="${{ inputs.env }}"
+          MODE="${{ inputs.mode }}"
+          cd firmware
+
+          echo "基础环境：$BASE"
+          echo "固件类型：$MODE"
+
+          if [ "$MODE" = "test" ]; then
+            if pio project config 2>/dev/null | grep -qE "^env:${BASE}_test$"; then
+              ENV="${BASE}_test"
+              echo "✔ 找到测试版：$ENV"
+            else
+              ENV="$BASE"
+              echo "::warning::${BASE} 没有 _test 变体，已回退到正式版"
+            fi
+          else
+            ENV="$BASE"
+          fi
+
+          # 兜底校验
+          if ! pio project config 2>/dev/null | grep -qE "^env:${ENV}$"; then
+            echo "::error::环境 ${ENV} 不存在，可用环境如下："
+            pio project config 2>/dev/null | grep -oE '^env:[^ ]+' | sed 's/^env://' | sort | head -40
+            exit 1
+          fi
+
+          echo "编译环境：$ENV"
+          echo "ENV=$ENV" >> "$GITHUB_ENV"
+
+      - name: 编译
         working-directory: firmware
         run: |
-          pio run -e ${{ inputs.env }}
+          pio run -e "$ENV" 2>&1 | tee build.log
 
-      - name: Collect artifacts
+      - name: 失败时打印错误摘要
+        if: failure()
+        working-directory: firmware
+        run: |
+          echo "=========== 错误行 ==========="
+          grep -inE "error|failed|unknown|not found" build.log | head -30 || true
+          echo "=========== 日志尾部 ==========="
+          tail -60 build.log || true
+
+      - name: 收集产物
+        if: success()
         run: |
           mkdir -p out
-          ENV="${{ inputs.env }}"
-          B=firmware/.pio/build/$ENV
+          B="firmware/.pio/build/${ENV}"
           for f in firmware.bin firmware_merged.bin bootloader.bin partitions.bin boot_app0.bin; do
-            if [ -f "$B/$f" ]; then cp "$B/$f" "out/${ENV}_${f}"; fi
+            if [ -f "$B/$f" ]; then
+              cp "$B/$f" "out/${ENV}_${f}"
+            fi
           done
-          echo "--- 产出文件 ---"
+          echo "------------ 产出 ------------"
           ls -lh out
+          echo ""
+          echo "烧录用 *_merged.bin，地址 0x0"
 
-      - uses: actions/upload-artifact@v4
+      - name: 上传产物
+        if: success()
+        uses: actions/upload-artifact@v4
         with:
-          name: inkboard-${{ inputs.env }}
+          name: inkboard-${{ inputs.env }}-${{ inputs.mode }}
           path: out/
           retention-days: 30
