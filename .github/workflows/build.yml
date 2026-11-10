@@ -1,0 +1,96 @@
+name: Build InkBoard Firmware
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'PlatformIO 环境名（见下方选项）'
+        required: true
+        default: 'epd_42_hink_ssd1683_c3_promini'
+        type: choice
+        options:
+          # ---------- 3.98" 华为四色屏 SE0398NZ07（768×552 黑白黄红）----------
+          - epd_398_se0398nz07a0_c3_promini
+          - epd_398_se0398nz07a0_c3_promini_led5
+          - epd_398_se0398nz07a0_c3_promini_selftest
+          - epd_398_se0398nz07a1_c3_promini
+          - epd_398_se0398nz07a1_c3_promini_led5
+          - epd_398_se0398nz07a1_c3_promini_selftest
+          - epd_398_se0398nz07a0_wroom32e
+          - epd_398_se0398nz07a0_yd_s3_n16r8
+          - epd_398_se0398nz07a1_yd_s3_n16r8
+          # ---------- 4.2" 400x300 ----------
+          - epd_42_hink_ssd1683_c3_promini
+          - epd_42_hink_ssd1683_c3_promini_led5
+          - epd_42_hink_ssd1683_c3_promini_test
+          - epd_42_hink_ssd1683_c3_promini_selftest
+          - epd_42_hink_ssd1683_wroom32e
+          - epd_42_hink_ssd1683_yd_s3_n16r8
+          - epd_42_uc8176_bwr_c3_promini
+          - epd_42_uc8176_bwr_wroom32e
+          - epd_42_gdem042f52_jd79668_c3_promini
+          - epd_42_depg0420ry683_ssd1683_c3_promini
+          - epd_42_wft0cz15_bwr_c3_promini
+          - epd_42_wsv2_ssd1683_c3_promini
+          - epd_42_wsv2_ssd1683_c3_std
+          - epd_42_wsv2_ssd1683_wroom32e
+          - epd_42_wsv2_ssd1683_yd_s3_n16r8
+          - epd_42_gxepd2_c3_promini
+          - epd_42_zhongjingyuan_bw_c3_promini
+          - epd_42_wft0cz15_bw_c3_promini
+          - epd_42_ssd1680_bwr_c3_promini
+          - epd_42_ssd1680_bw_c3_promini
+          - epd_42_se0420nq04_c3_promini
+          # ---------- 其它尺寸（备用）----------
+          - epd_583_uc8179_bwr_c3_promini
+          - epd_75_uc8179_c3_promini
+          - epd_565_uc8159_c3_promini
+          - epd_73_acep_c3_promini
+          - epd_73_spectra6_c3_promini
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('firmware/platformio.ini', 'firmware/boards/*.ini') }}
+          restore-keys: |
+            pio-${{ runner.os }}-
+
+      - name: Build
+        working-directory: firmware
+        run: |
+          pio run -e ${{ inputs.env }}
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p out
+          ENV="${{ inputs.env }}"
+          B=firmware/.pio/build/$ENV
+          for f in firmware.bin firmware_merged.bin bootloader.bin partitions.bin boot_app0.bin; do
+            if [ -f "$B/$f" ]; then cp "$B/$f" "out/${ENV}_${f}"; fi
+          done
+          echo "--- 产出文件 ---"
+          ls -lh out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inkboard-${{ inputs.env }}
+          path: out/
+          retention-days: 30
