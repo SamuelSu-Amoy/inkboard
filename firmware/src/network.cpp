@@ -176,6 +176,9 @@ static esp_adc_cal_characteristics_t s_adcChars;
 static bool s_adcCalDone = false;
 
 float readBatteryVoltage() {
+#if PIN_BAT_ADC < 0
+return 4.00f;
+#endif
     if (!s_adcCalDone) {
         esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12,
                                  ADC_WIDTH_BIT_12, 1100, &s_adcChars);
