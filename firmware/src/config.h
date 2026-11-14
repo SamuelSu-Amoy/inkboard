@@ -68,16 +68,16 @@
 #define PIN_LED        5
 #define PIN_AI_CHAT_SW -1
 #elif defined(BOARD_PROFILE_YD_ESP32_S3_N16R8)
-#define PIN_EPD_MOSI   11
-#define PIN_EPD_SCK    12
-#define PIN_EPD_CS     10
-#define PIN_EPD_DC     9
-#define PIN_EPD_RST    8
-#define PIN_EPD_BUSY   7
-#define PIN_BAT_ADC    4
+#define PIN_EPD_MOSI   5
+#define PIN_EPD_SCK    4
+#define PIN_EPD_CS     15
+#define PIN_EPD_DC     7
+#define PIN_EPD_RST    6
+#define PIN_EPD_BUSY   16
+#define PIN_BAT_ADC    -1
 #define PIN_CFG_BTN    0
 #define PIN_LED        -1
-#define PIN_RGB_LED    48
+#define PIN_RGB_LED    -1
 #define PIN_AI_CHAT_SW -1
 #else
 #error "Unsupported board profile"
