@@ -3,14 +3,18 @@
 #
 #  用法：Actions → Build InkBoard Firmware → Run workflow
 #        1) 选屏幕（env）
-#        2) 选固件类型（normal / test）
+#        2) 选固件类型（normal / test / selftest）
 #        3) 等 5~10 分钟 → 页面底部下载 Artifacts
 #
 #  说明：
-#   · normal = 正式版，按设定的间隔唤醒刷新（几十分钟一次）
-#   · test   = 调试版，每分钟唤醒一次，方便观察效果
-#   · 只有 base env 带 _test 变体时 test 才生效，否则自动回退 normal
-#   · 已剔除 _led5（老板 LED 接 GPIO5）和 _selftest（不联网自检图）变体
+#   · normal   = 正式版，按设定的间隔唤醒刷新（几十分钟一次）
+#   · test     = 调试版，每分钟唤醒一次，方便观察效果
+#   · selftest = 自检版，不联网，直接画测试图，用来验证驱动是否匹配
+#                （第一次刷一块新屏，先跑这个）
+#
+#  变体规则：
+#   · 只有 base env 存在 _test / _selftest 变体时才生效
+#   · 不存在会自动回退到 normal，并在日志里打黄色警告
 # ═══════════════════════════════════════════════════════════════════════════
 
 name: Build InkBoard Firmware
@@ -25,6 +29,14 @@ on:
         type: choice
         options:
           # ─────────────────────────────────────────────────────────────
+          # 喵哎 MiaooAim 硬件  ESP32-S3 N16R8 + 4.2" JD79668 四色
+          # 引脚：SCK=4 MOSI=5 CS=15 DC=7 RST=6 BUSY=16
+          # ⚠️ 只有这三个是 S3 的，其它 _c3_ / _wroom32e 刷了会一直重启
+          # ─────────────────────────────────────────────────────────────
+          - epd_42_gdem042f52_jd79668_yd_s3_n16r8           # 喵哎 · S3 · JD79668 四色
+          # 自检版 / 调试版不用单独选，上面 mode 里挑 selftest 或 test 即可
+
+          # ─────────────────────────────────────────────────────────────
           # 华为 3.98" 四色屏  SE0398NZ07  768×552  黑白黄红
           # 来源：华为 Nova 14 彩色显示手机壳拆屏
           # 注意：不支持局刷，只能全刷；FPC 印 A1 就选 A1
@@ -33,13 +45,14 @@ on:
           - epd_398_se0398nz07a1_c3_promini        # A1 版 · C3 · 排线印着 A1 时选
 
           # ─────────────────────────────────────────────────────────────
-          # 4.2" 400×300 · 三色（黑白红 / 黑白黄红）
+          # 4.2" 400×300 · 三色 / 四色（黑白红 / 黑白黄红）
+          # 注意看驱动 IC，选错必白屏
           # ─────────────────────────────────────────────────────────────
           - epd_42_hink_ssd1683_c3_promini         # HINK SSD1683 · 黑白红 · 作者自用款
           - epd_42_uc8176_bwr_c3_promini           # UC8176 · 黑白红 · 微雪 4.2 B V1 / GDEW042Z15
           - epd_42_wft0cz15_bwr_c3_promini         # WFT0420CZ15 · 黑白红
           - epd_42_ssd1680_bwr_c3_promini          # SSD1680 · 黑白红 · DKE DEPG0420RWS830F0
-          - epd_42_gdem042f52_jd79668_c3_promini   # JD79668 · 黑白红黄 · GDEM042F52
+          - epd_42_gdem042f52_jd79668_c3_promini   # JD79668 · 黑白红黄 · GDEM042F52（C3 版）
           - epd_42_depg0420ry683_ssd1683_c3_promini # SSD1683 · 黑白红黄 · DKE DEPG0420RY683
 
           # ─────────────────────────────────────────────────────────────
@@ -72,6 +85,7 @@ on:
         options:
           - normal    # 正式版：按设定间隔唤醒（省电）
           - test      # 调试版：每分钟唤醒一次（看效果用）
+          - selftest  # 自检版：不联网，直接画测试图（新屏先用这个）
 
 jobs:
   build:
@@ -121,24 +135,36 @@ jobs:
           echo "基础环境：$BASE"
           echo "固件类型：$MODE"
 
-          if [ "$MODE" = "test" ]; then
-            if pio project config 2>/dev/null | grep -qE "^env:${BASE}_test$"; then
-              ENV="${BASE}_test"
-              echo "✔ 找到测试版：$ENV"
+          # 根据 mode 拼出目标 env
+          if [ "$MODE" = "normal" ]; then
+            ENV="$BASE"
+          else
+            TARGET="${BASE}_${MODE}"
+            if pio project config 2>/dev/null | grep -qE "^env:${TARGET}$"; then
+              ENV="$TARGET"
+              echo "✔ 找到 ${MODE} 变体：$ENV"
             else
               ENV="$BASE"
-              echo "::warning::${BASE} 没有 _test 变体，已回退到正式版"
+              echo "::warning::${BASE} 没有 _${MODE} 变体，已回退到正式版"
             fi
-          else
-            ENV="$BASE"
           fi
 
           # 兜底校验
           if ! pio project config 2>/dev/null | grep -qE "^env:${ENV}$"; then
             echo "::error::环境 ${ENV} 不存在，可用环境如下："
-            pio project config 2>/dev/null | grep -oE '^env:[^ ]+' | sed 's/^env://' | sort | head -40
+            pio project config 2>/dev/null | grep -oE '^env:[^ ]+' | sed 's/^env://' | sort | head -50
             exit 1
           fi
+
+          # 芯片提示，防止刷错
+          case "$ENV" in
+            *_c3_promini*|*_c3_std*|*_c3_wroom02*)
+              echo "::notice::这是 ESP32-C3 固件，请确认你的板子是 C3" ;;
+            *_yd_s3_n16r8*)
+              echo "::notice::这是 ESP32-S3 固件，请确认你的板子是 S3" ;;
+            *_wroom32e*|*_wroom02*)
+              echo "::notice::这是 ESP32-WROOM 固件，请确认你的板子是 WROOM" ;;
+          esac
 
           echo "编译环境：$ENV"
           echo "ENV=$ENV" >> "$GITHUB_ENV"
