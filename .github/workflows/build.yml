@@ -76,7 +76,7 @@ on:
           - epd_398_se0398nz07a0_wroom32e          # 华为 3.98 A0 · WROOM-32E
           - epd_398_se0398nz07a0_yd_s3_n16r8       # 华为 3.98 A0 · S3 N16R8
           - epd_398_se0398nz07a1_yd_s3_n16r8       # 华为 3.98 A1 · S3 N16R8
-
+          - epd_42_hink_idevice_s3_n16r8           # HINK SSD1683 · iDevice S3 N16R8（引脚 13/14/15）
       mode:
         description: '固件类型'
         required: true
@@ -164,6 +164,8 @@ jobs:
               echo "::notice::这是 ESP32-S3 固件，请确认你的板子是 S3" ;;
             *_wroom32e*|*_wroom02*)
               echo "::notice::这是 ESP32-WROOM 固件，请确认你的板子是 WROOM" ;;
+            *_idevice_s3*)
+              echo "::notice::这是 ESP32-S3（iDevice 板）固件，请确认你的板子是 S3" ;;
           esac
 
           echo "编译环境：$ENV"
