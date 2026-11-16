@@ -141,6 +141,11 @@ static void ssd1683InitController() {
 #elif defined(BOARD_PROFILE_YD_ESP32_S3_N16R8)
     // the same caution on the S3: GPIO13 (its default FSPI MISO), not connected
     SPI.begin(PIN_EPD_SCK, 13, PIN_EPD_MOSI, PIN_EPD_CS);
+#elif defined(BOARD_PROFILE_IDEVICE_S3)
+    // iDevice S3 board: GPIO13 is the EPD DC line, so it MUST NOT be used as
+    // dummy MISO (SPI would take it over as an input and DC stops working).
+    // GPIO21 is unused on this board and only serves as a no-connect input.
+    SPI.begin(PIN_EPD_SCK, 21, PIN_EPD_MOSI, PIN_EPD_CS);
 #else
     SPI.begin(PIN_EPD_SCK, -1, PIN_EPD_MOSI, PIN_EPD_CS);
 #endif

@@ -1019,7 +1019,7 @@ void setup() {
     ledInit();
     Serial.begin(115200);
     delay(3000);
-#if defined(BOARD_PROFILE_ESP32_C3_WROOM02) || defined(BOARD_PROFILE_SMT_WROOM32E) || defined(BOARD_PROFILE_YD_ESP32_S3_N16R8)
+#if defined(BOARD_PROFILE_ESP32_C3_WROOM02) || defined(BOARD_PROFILE_SMT_WROOM32E) || defined(BOARD_PROFILE_YD_ESP32_S3_N16R8) || defined(BOARD_PROFILE_IDEVICE_S3)
     analogReadResolution(12);
     analogSetAttenuation(ADC_11db);
 #endif
@@ -1143,7 +1143,7 @@ void setup() {
     ledInit();
     Serial.begin(115200);
     delay(3000);
-#if defined(BOARD_PROFILE_ESP32_C3_WROOM02) || defined(BOARD_PROFILE_SMT_WROOM32E) || defined(BOARD_PROFILE_YD_ESP32_S3_N16R8)
+#if defined(BOARD_PROFILE_ESP32_C3_WROOM02) || defined(BOARD_PROFILE_SMT_WROOM32E) || defined(BOARD_PROFILE_YD_ESP32_S3_N16R8) || defined(BOARD_PROFILE_IDEVICE_S3)
     analogReadResolution(12);
     analogSetAttenuation(ADC_11db);
 #endif
