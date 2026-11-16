@@ -105,11 +105,14 @@
 
 static const int W = EPD_WIDTH;
 static const int H = EPD_HEIGHT;
-static const int ROW_BYTES   = W / 8;
+// Round up: widths that are not a multiple of 8 (e.g. the 2.13" 250x122 panel)
+// would otherwise lose their last 2 columns and, worse, use a stride that does
+// not match the (w+7)/8 stride GxEPD2 uses internally.
+static const int ROW_BYTES   = (W + 7) / 8;
 static const int ROW_STRIDE  = (ROW_BYTES + 3) & ~3;  // BMP row stride (4-byte aligned)
 static const int IMG_BUF_LEN = ROW_BYTES * H;
 /** Preprocessor image buffer size for #if (IMG_BUF_LEN is not a cpp constant). */
-#define INKSIGHT_IMG_BUF_BYTES_MACRO ((EPD_WIDTH / 8) * (EPD_HEIGHT))
+#define INKSIGHT_IMG_BUF_BYTES_MACRO (((EPD_WIDTH + 7) / 8) * (EPD_HEIGHT))
 
 #ifndef EPD_BPP
 #define EPD_BPP 1
