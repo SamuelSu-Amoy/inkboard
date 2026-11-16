@@ -77,6 +77,8 @@ on:
           - epd_398_se0398nz07a0_yd_s3_n16r8       # 华为 3.98 A0 · S3 N16R8
           - epd_398_se0398nz07a1_yd_s3_n16r8       # 华为 3.98 A1 · S3 N16R8
           - epd_42_hink_idevice_s3_n16r8           # HINK SSD1683 · iDevice S3 N16R8（引脚 13/14/15）
+          - epd_213_idevice_s3                     # 2.13" 250x122 黑白 · iDevice S3（SSD1680，先试这个）
+          - epd_213_uc8151_idevice_s3              # 2.13" 250x122 黑白 · iDevice S3（UC8151，SSD1680 白屏时换）
       mode:
         description: '固件类型'
         required: true
