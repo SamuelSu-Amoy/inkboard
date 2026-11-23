@@ -79,6 +79,7 @@ on:
           - epd_42_hink_idevice_s3_n16r8           # HINK SSD1683 · iDevice S3 N16R8（引脚 13/14/15）
           - epd_213_idevice_s3                     # 2.13" 250x122 黑白 · iDevice S3（SSD1680，先试这个）
           - epd_213_uc8151_idevice_s3              # 2.13" 250x122 黑白 · iDevice S3（UC8151，SSD1680 白屏时换）
+          - epd_583_uc8179_bwr_idevice_s3          # 5.83" 648x480 三色 BWR · iDevice S3（JD79686 屏实测点亮）
 
           # ─────────────────────────────────────────────────────────────
           # 5.83" 648×480 · FPC 24pin 0.5mm
