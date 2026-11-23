@@ -116,7 +116,7 @@ static void uc8179WriteWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 static void uc8179InitController() {
     if (uc8179_initialized) return;
 
-    SPI.begin(PIN_EPD_SCK, -1, PIN_EPD_MOSI, PIN_EPD_CS);
+    SPI.begin(PIN_EPD_SCK, PIN_EPD_MISO, PIN_EPD_MOSI, PIN_EPD_CS);
 
     epdReset();
 
