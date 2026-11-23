@@ -62,12 +62,17 @@ static void epdSendData(uint8_t data) {
 
 static void epdWaitBusy(unsigned long timeout_ms = 30000) {
     const unsigned long t0 = millis();
+    const int first = digitalRead(PIN_EPD_BUSY);
     while (digitalRead(PIN_EPD_BUSY) == LOW) {
         delay(10);
         if (millis() - t0 > timeout_ms) {
-            Serial.println("[EPD-UC8179] busy timeout");
+            Serial.printf("[EPD-UC8179] busy timeout after %lums (first=%d now=%d)\n",
+                          millis() - t0, first, digitalRead(PIN_EPD_BUSY));
             return;
         }
+    }
+    if (millis() - t0 > 500) {
+        Serial.printf("[EPD-UC8179] busy released after %lums (first=%d)\n", millis() - t0, first);
     }
 }
 
@@ -250,7 +255,10 @@ static void epdDisplayPreparedPlanes(const uint8_t *black_plane, const uint8_t *
 // ── GPIO initialization ──────────────────────────────────────────────
 
 void gpioInit() {
-    pinMode(PIN_EPD_BUSY, INPUT);
+    // BUSY is push-pull on UC8179, but a poor FPC contact leaves it floating and it
+    // then reads LOW = "permanently busy". Enable the internal pull-up so a broken
+    // BUSY line shows up as idle instead of hanging the whole refresh.
+    pinMode(PIN_EPD_BUSY, INPUT_PULLUP);
     pinMode(PIN_EPD_RST, OUTPUT);
     pinMode(PIN_EPD_DC, OUTPUT);
     pinMode(PIN_EPD_CS, OUTPUT);
@@ -260,6 +268,9 @@ void gpioInit() {
     digitalWrite(PIN_EPD_RST, HIGH);
     digitalWrite(PIN_EPD_CS, HIGH);
     digitalWrite(PIN_EPD_SCK, LOW);
+    Serial.printf("[EPD-UC8179] pins SCK=%d MOSI=%d CS=%d DC=%d RST=%d BUSY=%d  BUSY level=%d\n",
+                  PIN_EPD_SCK, PIN_EPD_MOSI, PIN_EPD_CS, PIN_EPD_DC, PIN_EPD_RST, PIN_EPD_BUSY,
+                  digitalRead(PIN_EPD_BUSY));
 }
 
 // ── Public EPD interface ─────────────────────────────────────────────
