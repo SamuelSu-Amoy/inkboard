@@ -74,6 +74,9 @@
 #define PIN_EPD_DC     13
 #define PIN_EPD_RST    14
 #define PIN_EPD_BUSY   15
+// DC=GPIO13 is also the ESP32-S3 FSPI default MISO: SPI.begin(sck,-1,...) would
+// grab GPIO13 and break the DC line. Pin a harmless spare as dummy MISO.
+#define PIN_EPD_MISO   21
 #define PIN_BAT_ADC    4
 #define PIN_CFG_BTN    0
 #define PIN_LED        -1
@@ -81,6 +84,10 @@
 #define PIN_AI_CHAT_SW -1
 #else
 #error "Unsupported board profile"
+#endif
+
+#ifndef PIN_EPD_MISO
+#define PIN_EPD_MISO -1
 #endif
 
 #ifndef PIN_RGB_LED
