@@ -121,7 +121,13 @@ static void uc8179WriteWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 static void uc8179InitController() {
     if (uc8179_initialized) return;
 
+#if PIN_EPD_MISO >= 0
     SPI.begin(PIN_EPD_SCK, PIN_EPD_MISO, PIN_EPD_MOSI, PIN_EPD_CS);
+#else
+    // ESP32-C3 has no default MISO: passing -1 makes spiAttachMISO() log an error.
+    // The panel is write-only, so just use the 3-argument overload.
+    SPI.begin(PIN_EPD_SCK, PIN_EPD_MOSI, PIN_EPD_CS);
+#endif
 
     epdReset();
 
