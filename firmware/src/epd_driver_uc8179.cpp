@@ -63,7 +63,10 @@ static void epdSendData(uint8_t data) {
 static void epdWaitBusy(unsigned long timeout_ms = 30000) {
     const unsigned long t0 = millis();
     const int first = digitalRead(PIN_EPD_BUSY);
-    while (digitalRead(PIN_EPD_BUSY) == LOW) {
+    // UC8179 / GDEQ0583T31: BUSY HIGH = refreshing (same as the generic driver in
+    // epd_driver.cpp). The old check `== LOW` never entered the loop, so a full
+    // 15s refresh was skipped entirely and the panel kept its previous image.
+    while (digitalRead(PIN_EPD_BUSY) == HIGH) {
         delay(10);
         if (millis() - t0 > timeout_ms) {
             Serial.printf("[EPD-UC8179] busy timeout after %lums (first=%d now=%d)\n",
@@ -235,7 +238,7 @@ static void uc8179Refresh() {
     const int busyAtStart = digitalRead(PIN_EPD_BUSY);
     const unsigned long t0 = millis();
     epdWaitBusy(60000);
-    Serial.printf("[EPD-UC8176] refresh: BUSY %s at start, %lums\n", busyAtStart == LOW ? "low (busy)" : "HIGH (idle?!)",
+    Serial.printf("[EPD-UC8176] refresh: BUSY %s at start, %lums\n", busyAtStart == HIGH ? "HIGH (busy)" : "low (idle?!)",
                   millis() - t0 + 100);
     uc8179PowerOff();
 #else
