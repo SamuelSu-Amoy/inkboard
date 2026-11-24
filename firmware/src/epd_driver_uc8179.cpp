@@ -63,10 +63,9 @@ static void epdSendData(uint8_t data) {
 static void epdWaitBusy(unsigned long timeout_ms = 30000) {
     const unsigned long t0 = millis();
     const int first = digitalRead(PIN_EPD_BUSY);
-    // UC8179 / GDEQ0583T31: BUSY HIGH = refreshing (same as the generic driver in
-    // epd_driver.cpp). The old check `== LOW` never entered the loop, so a full
-    // 15s refresh was skipped entirely and the panel kept its previous image.
-    while (digitalRead(PIN_EPD_BUSY) == HIGH) {
+    // UC8179 on this panel: BUSY LOW = busy (the configuration that was verified
+    // working on 2026-11-23). Do NOT use INPUT_PULLUP on the BUSY line here.
+    while (digitalRead(PIN_EPD_BUSY) == LOW) {
         delay(10);
         if (millis() - t0 > timeout_ms) {
             Serial.printf("[EPD-UC8179] busy timeout after %lums (first=%d now=%d)\n",
@@ -238,7 +237,7 @@ static void uc8179Refresh() {
     const int busyAtStart = digitalRead(PIN_EPD_BUSY);
     const unsigned long t0 = millis();
     epdWaitBusy(60000);
-    Serial.printf("[EPD-UC8176] refresh: BUSY %s at start, %lums\n", busyAtStart == HIGH ? "HIGH (busy)" : "low (idle?!)",
+    Serial.printf("[EPD-UC8176] refresh: BUSY %s at start, %lums\n", busyAtStart == LOW ? "low (busy)" : "HIGH (idle?!)",
                   millis() - t0 + 100);
     uc8179PowerOff();
 #else
@@ -261,10 +260,7 @@ static void epdDisplayPreparedPlanes(const uint8_t *black_plane, const uint8_t *
 // ── GPIO initialization ──────────────────────────────────────────────
 
 void gpioInit() {
-    // BUSY is push-pull on UC8179, but a poor FPC contact leaves it floating and it
-    // then reads LOW = "permanently busy". Enable the internal pull-up so a broken
-    // BUSY line shows up as idle instead of hanging the whole refresh.
-    pinMode(PIN_EPD_BUSY, INPUT_PULLUP);
+    pinMode(PIN_EPD_BUSY, INPUT);
     pinMode(PIN_EPD_RST, OUTPUT);
     pinMode(PIN_EPD_DC, OUTPUT);
     pinMode(PIN_EPD_CS, OUTPUT);
